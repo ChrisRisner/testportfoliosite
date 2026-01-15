@@ -12,7 +12,6 @@ DONE Pre-process step to generate a metadata file for each album including exif 
 * Evaluate google analytics or alternatives
 * Test deployment to a non-cr domain
 * Add about page including generating it with menu
-* Add 404 page
 * add favico.ico
 * add Robots.txt
 * Add about page - reference where we stole design from

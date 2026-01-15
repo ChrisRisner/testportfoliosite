@@ -39,6 +39,11 @@ def setup_directories():
             shutil.rmtree(dist_static)
         shutil.copytree(STATIC_DIR, dist_static)
 
+        # Copy favicon to root if exists
+        favicon_src = STATIC_DIR / "favicon.ico"
+        if favicon_src.exists():
+            shutil.copy2(favicon_src, DIST_DIR / "favicon.ico")
+
 def get_exif_data(img: Image.Image) -> Dict[str, str]:
     """Extract and format specific EXIF data."""
     meta = {}
