@@ -1,57 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Page Not Found</title>
-    <link rel="stylesheet" href="{{ base_url }}/static/style.css">
-</head>
-<body>
-    <div class="layout">
-        <!-- Mobile Header -->
-        <header class="mobile-header">
-            <button id="menu-toggle" aria-label="Toggle Menu">☰</button>
-            <h1>Portfolio</h1>
-        </header>
+{% set main_class = "content centered" %}
+{% extends "base.html" %}
 
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <h1><a href="{{ base_url }}/" style="text-decoration:none; color:inherit;">Portfolio</a></h1>
-            <nav>
-                <ul class="nav-list">
-                    {% for album in db.albums %}
-                    <li>
-                        <a href="{{ base_url }}/{{ album.slug }}/" class="nav-link">
-                            {{ album.title }}
-                        </a>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </nav>
-            <div class="social-links">
-                <a href="#" aria-label="Instagram">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
-                </a>
-                <a href="#" aria-label="Threads">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"></path></svg>
-                </a>
-                <a href="#" aria-label="Email">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                </a>
-            </div>
-        </aside>
+{% block title %}404 - Page Not Found{% endblock %}
 
-        <!-- Main Content -->
-        <main class="content centered" id="content">
-            <div class="not-found-container">
-                
-                <p>Sorry, the page you are looking for does not exist.</p>
-                <img src="{{ base_url }}/static/404-safari.png" alt="404 Page Not Found" class="not-found-image">
-            </div>
-        </main>
+{% block content %}
+    <div class="not-found-container">
+        <p>Sorry, the page you are looking for does not exist.</p>
+        <img src="{{ base_url }}/static/404-safari.png" alt="404 Page Not Found" class="not-found-image">
     </div>
-
-    <!-- App Logic -->
-    <script type="module" src="{{ base_url }}/static/app.js"></script>
-</body>
-</html>
+{% endblock %}
