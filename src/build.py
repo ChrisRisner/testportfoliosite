@@ -200,6 +200,17 @@ def main() -> int:
                 f.write(album_html)
                 
         print(f"Generated home and {len(albums_data)} album pages.")
+
+        # 3. Generate 404 Page
+        print("Generating 404 Page...")
+        if (TEMPLATE_DIR / "404.html").exists():
+            template_404 = env.get_template("404.html")
+            html_404 = template_404.render(db=db, base_url=BASE_URL)
+            with open(DIST_DIR / "404.html", "w") as f:
+                f.write(html_404)
+        else:
+            print("Warning: 404.html template not found.")
+
     else:
         print("Warning: index.html template not found.")
 
