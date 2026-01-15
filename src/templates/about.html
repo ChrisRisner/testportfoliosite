@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portfolio</title>
+    <title>About</title>
     <link rel="stylesheet" href="{{ base_url }}/static/style.css">
     <link rel="stylesheet" href="https://unpkg.com/photoswipe@5.4.2/dist/photoswipe.css">
 </head>
@@ -22,14 +22,14 @@
                 <ul class="nav-list">
                     {% for album in db.albums %}
                     <li>
-                        <a href="{{ base_url }}/{{ album.slug }}/" class="nav-link {{ 'active' if current_album and current_album.slug == album.slug else '' }}">
+                        <a href="{{ base_url }}/{{ album.slug }}/" class="nav-link">
                             {{ album.title }}
                         </a>
                     </li>
                     {% endfor %}
                 </ul>
             </nav>
-            <a href="{{ base_url }}/about/" class="nav-link">About</a>
+            <a href="{{ base_url }}/about/" class="nav-link active">About</a>
             <div class="social-links">
                 <a href="#" aria-label="Instagram">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
@@ -45,30 +45,9 @@
 
         <!-- Main Content -->
         <main class="content" id="content">
-            {% if current_album %}
-            <h2>{{ current_album.title }}</h2>
-            <div class="album-grid" id="gallery">
-                {% for photo in current_album.photos %}
-                <a href="{{ base_url }}{{ photo.src }}" 
-                   data-pswp-width="{{ photo.w }}" 
-                   data-pswp-height="{{ photo.h }}" 
-                   target="_blank"
-                   class="photo-link">
-                    <img class="photo-item" src="{{ base_url }}{{ photo.src }}" alt="" loading="{{ 'eager' if loop.index <= 4 else 'lazy' }}">
-                </a>
-                {% endfor %}
-            </div>
-            {% else %}
-            <!-- Home View: List of Albums -->
-            <div class="album-grid">
-                {% for album in db.albums %}
-                <a href="{{ base_url }}/{{ album.slug }}/" class="album-card">
-                    <img src="{{ base_url }}{{ album.cover }}" alt="{{ album.title }}">
-                    <h3>{{ album.title }}</h3>
-                </a>
-                {% endfor %}
-            </div>
-            {% endif %}
+            <h2>About</h2>
+            <p>Placeholder text for the About page. This will be expanded later.</p>
+            <p>Another short paragraph of placeholder text for now.</p>
         </main>
     </div>
 

@@ -10,8 +10,6 @@ DONE Pre-process step to generate a metadata file for each album including exif 
 * Look into how stephan morais prevents right clicking on page
 * Consider loading thumbnails for pictures on album page and only go full version when needed
 * Evaluate google analytics or alternatives
-* Test deployment to a non-cr domain
 * Add about page including generating it with menu
-* add favico.ico
 * add Robots.txt
 * Add about page - reference where we stole design from

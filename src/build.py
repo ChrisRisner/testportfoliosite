@@ -192,8 +192,20 @@ def main() -> int:
         home_html = template.render(db=db, current_album=None, base_url=BASE_URL)
         with open(DIST_DIR / "index.html", "w") as f:
             f.write(home_html)
+
+        # 2. Generate About Page
+        if (TEMPLATE_DIR / "about.html").exists():
+            print("Generating About Page...")
+            template_about = env.get_template("about.html")
+            about_html = template_about.render(db=db, base_url=BASE_URL)
+            about_dir = DIST_DIR / "about"
+            about_dir.mkdir(exist_ok=True, parents=True)
+            with open(about_dir / "index.html", "w") as f:
+                f.write(about_html)
+        else:
+            print("Warning: about.html template not found.")
             
-        # 2. Generate Album Pages
+        # 3. Generate Album Pages
         print("Generating Album Pages...")
         for album in albums_data:
             slug = album["slug"]
