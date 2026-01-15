@@ -26,6 +26,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         lightbox.init();
     }
+
+    // Asset Protection: Prevent Right-Click and Dragging
+    document.addEventListener('contextmenu', event => {
+        event.preventDefault();
+    });
+
+    document.addEventListener('dragstart', event => {
+        event.preventDefault();
+    });
 });
 
 

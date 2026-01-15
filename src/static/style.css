@@ -260,3 +260,31 @@ body {
 .button:hover {
     background-color: #555;
 }
+
+/* Asset Protection Utilities */
+img {
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+    pointer-events: auto; /* Ensure clicks still work for lightbox */
+}
+
+/* Prevent selection globally but allow text selection */
+body {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Re-enable text selection for specific text containers */
+p, h1, h2, h3, h4, h5, h6, a, span, li, button, .button {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+    cursor: default; /* Avoid text cursor on non-text elements */
+}
+
