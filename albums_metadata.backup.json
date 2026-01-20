@@ -136,7 +136,7 @@
     "photos": [
       {
         "filename": "PXL_20260108_201624698.jpg",
-        "photo_name": "Sunset in Lisbon",
+        "photo_name": "PXL_20260108_201624698.jpg",
         "width": 3072,
         "height": 4080,
         "aspect_ratio": 0.753,
@@ -151,6 +151,24 @@
           "lens_model": "Pixel 10 Pro XL back camera 6.9mm f/1.68"
         },
         "sort_index": 0
+      },
+      {
+        "filename": "PXL_20260109_205646878.jpg",
+        "photo_name": "PXL_20260109_205646878.jpg",
+        "width": 3072,
+        "height": 4080,
+        "aspect_ratio": 0.753,
+        "orientation": "portrait",
+        "metadata": {
+          "camera_model": "Pixel 10 Pro XL",
+          "date_taken": "2026:01:09 15:56:46",
+          "focal_length": "6.9 mm",
+          "shutter_speed": "1/120s",
+          "aperture": "f/1.68",
+          "iso": 520,
+          "lens_model": "Pixel 10 Pro XL back camera 6.9mm f/1.68"
+        },
+        "sort_index": 1
       },
       {
         "filename": "_DSC0992.JPG",
@@ -331,24 +349,6 @@
           "lens_model": "NIKKOR Z 24-120mm f/4 S"
         },
         "sort_index": 11
-      },
-      {
-        "filename": "PXL_20260109_205646878.jpg",
-        "photo_name": "PXL_20260109_205646878.jpg",
-        "width": 3072,
-        "height": 4080,
-        "aspect_ratio": 0.753,
-        "orientation": "portrait",
-        "metadata": {
-          "camera_model": "Pixel 10 Pro XL",
-          "date_taken": "2026:01:09 15:56:46",
-          "focal_length": "6.9 mm",
-          "shutter_speed": "1/120s",
-          "aperture": "f/1.68",
-          "iso": 520,
-          "lens_model": "Pixel 10 Pro XL back camera 6.9mm f/1.68"
-        },
-        "sort_index": 99
       }
     ]
   },

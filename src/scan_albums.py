@@ -2,6 +2,8 @@ import os
 import json
 import re
 from pathlib import Path
+from datetime import datetime
+from typing import Dict, List, Any
 from PIL import Image, ImageOps, ExifTags
 
 ALBUMS_DIR = "Albums"
@@ -47,6 +49,7 @@ def get_exif_data(image_path):
             if not raw_exif:
                 return {}
 
+            # Search top-level EXIF tags
             for tag_id, value in raw_exif.items():
                 tag_name = ExifTags.TAGS.get(tag_id)
                 if tag_name in TAGS_TO_EXTRACT:
@@ -55,6 +58,18 @@ def get_exif_data(image_path):
                     if sanitized_value is not None:
                         key = TAGS_TO_EXTRACT[tag_name]
                         exif_data[key] = clean_value(key, sanitized_value)
+            
+            # Search EXIF IFD (contains detailed camera settings)
+            exif_ifd = raw_exif.get_ifd(0x8769)
+            if exif_ifd:
+                for tag_id, value in exif_ifd.items():
+                    tag_name = ExifTags.TAGS.get(tag_id)
+                    if tag_name in TAGS_TO_EXTRACT:
+                        # Sanitize string values before formatting
+                        sanitized_value = sanitize_exif_string(value)
+                        if sanitized_value is not None:
+                            key = TAGS_TO_EXTRACT[tag_name]
+                            exif_data[key] = clean_value(key, sanitized_value)
     except Exception as e:
         print(f"Error reading EXIF for {image_path}: {e}")
     
@@ -107,6 +122,205 @@ def clean_value(key, value):
 
     return str(value)
 
+class ChangeTracker:
+    """Track all changes during album scanning for reporting."""
+    
+    def __init__(self):
+        self.start_time = datetime.now()
+        self.changes_by_album = {}
+        self.albums_added = []
+        self.albums_removed = []
+    
+    def log_photo_added(self, album: str, filename: str, sort_index: int):
+        self._ensure_album(album)
+        self.changes_by_album[album]["photos_added"].append({
+            "filename": filename,
+            "sort_index": sort_index,
+            "reason": "new photo in folder"
+        })
+    
+    def log_photo_removed(self, album: str, filename: str, sort_index: int):
+        self._ensure_album(album)
+        self.changes_by_album[album]["photos_removed"].append({
+            "filename": filename,
+            "previous_sort_index": sort_index,
+            "reason": "no longer in folder"
+        })
+    
+    def log_photo_updated(self, album: str, filename: str, changes: Dict):
+        self._ensure_album(album)
+        self.changes_by_album[album]["photos_updated"].append({
+            "filename": filename,
+            "changes": changes
+        })
+    
+    def log_album_added(self, album: str):
+        self.albums_added.append(album)
+    
+    def log_album_removed(self, album: str):
+        self.albums_removed.append(album)
+    
+    def _ensure_album(self, album: str):
+        if album not in self.changes_by_album:
+            self.changes_by_album[album] = {
+                "photos_added": [],
+                "photos_removed": [],
+                "photos_updated": []
+            }
+    
+    def generate_report(self) -> Dict[str, Any]:
+        """Generate complete change log report."""
+        duration = (datetime.now() - self.start_time).total_seconds()
+        
+        # Calculate summary
+        total_added = sum(len(a["photos_added"]) for a in self.changes_by_album.values())
+        total_removed = sum(len(a["photos_removed"]) for a in self.changes_by_album.values())
+        total_updated = sum(len(a["photos_updated"]) for a in self.changes_by_album.values())
+        
+        return {
+            "timestamp": self.start_time.isoformat(),
+            "scan_duration_seconds": round(duration, 2),
+            "summary": {
+                "albums_added": len(self.albums_added),
+                "albums_removed": len(self.albums_removed),
+                "photos_added": total_added,
+                "photos_removed": total_removed,
+                "photos_updated": total_updated
+            },
+            "albums_added": self.albums_added,
+            "albums_removed": self.albums_removed,
+            "changes": [
+                {
+                    "album": album,
+                    **details
+                }
+                for album, details in self.changes_by_album.items()
+                if details["photos_added"] or details["photos_removed"] or details["photos_updated"]
+            ]
+        }
+    
+    def save_to_file(self, directory: str = "AlbumChanges"):
+        """Save change log to timestamped JSON file."""
+        os.makedirs(directory, exist_ok=True)
+        
+        timestamp = self.start_time.strftime("%Y%m%d_%H%M%S")
+        filename = f"album_changes_{timestamp}.json"
+        filepath = os.path.join(directory, filename)
+        
+        report = self.generate_report()
+        
+        with open(filepath, 'w') as f:
+            json.dump(report, f, indent=2)
+        
+        print(f"Change log saved to {filepath}")
+        return filepath
+
+def load_existing_metadata(filepath: str) -> Dict[str, Any]:
+    """Load and validate existing metadata file."""
+    if not os.path.exists(filepath):
+        print(f"No existing metadata at {filepath}, creating fresh scan.")
+        return {}
+    
+    try:
+        with open(filepath, 'r') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError) as e:
+        print(f"Error loading existing metadata: {e}")
+        print("Proceeding with fresh scan.")
+        return {}
+
+def merge_photo_metadata(
+    old_photos: List[Dict],
+    new_scanned_photos: List[Dict],
+    changes: ChangeTracker,
+    album_name: str
+) -> List[Dict]:
+    """
+    Merge old and new photo metadata, preserving sort_index and photo_name.
+    
+    Args:
+        old_photos: Photos from existing albums_metadata.json
+        new_scanned_photos: Photos scanned from filesystem
+        changes: ChangeTracker instance for logging
+        album_name: Name of album being processed
+    
+    Returns:
+        Merged list of photos with preserved and updated fields
+    """
+    # Build lookup by filename
+    old_by_filename = {p['filename']: p for p in old_photos}
+    new_by_filename = {p['filename']: p for p in new_scanned_photos}
+    
+    # Track filenames
+    old_filenames = set(old_by_filename.keys())
+    new_filenames = set(new_by_filename.keys())
+    
+    # Identify changes
+    kept_filenames = old_filenames & new_filenames
+    removed_filenames = old_filenames - new_filenames
+    added_filenames = new_filenames - old_filenames
+    
+    # Build result list
+    merged_photos = []
+    
+    # 1. Process existing photos (preserve sort_index and photo_name)
+    for filename in sorted(kept_filenames):
+        old_photo = old_by_filename[filename]
+        new_photo = new_by_filename[filename]
+        
+        # Create merged photo, preserving critical fields
+        merged = {
+            "filename": filename,
+            "photo_name": old_photo.get("photo_name", filename),  # Preserve custom name
+            "width": new_photo["width"],                           # Update from filesystem
+            "height": new_photo["height"],
+            "aspect_ratio": new_photo["aspect_ratio"],
+            "orientation": new_photo["orientation"],
+            "metadata": new_photo["metadata"],                     # Update EXIF
+            "sort_index": old_photo["sort_index"]                  # Preserve order
+        }
+        
+        # Track if metadata changed
+        if old_photo.get("metadata") != new_photo["metadata"]:
+            changes.log_photo_updated(album_name, filename, {
+                "metadata": {
+                    "old": old_photo.get("metadata", {}),
+                    "new": new_photo["metadata"]
+                }
+            })
+        
+        merged_photos.append(merged)
+    
+    # 2. Process new photos (append to end)
+    if merged_photos:
+        max_sort_index = max(p["sort_index"] for p in merged_photos)
+    else:
+        max_sort_index = -1
+    
+    for i, filename in enumerate(sorted(added_filenames)):
+        new_photo = new_by_filename[filename]
+        new_sort_index = max_sort_index + i + 1
+        
+        new_photo["photo_name"] = filename  # Default photo_name
+        new_photo["sort_index"] = new_sort_index
+        
+        merged_photos.append(new_photo)
+        changes.log_photo_added(album_name, filename, new_sort_index)
+    
+    # 3. Log removed photos
+    for filename in removed_filenames:
+        old_photo = old_by_filename[filename]
+        changes.log_photo_removed(
+            album_name,
+            filename,
+            old_photo.get("sort_index")
+        )
+    
+    # Sort by sort_index before returning
+    merged_photos.sort(key=lambda p: p["sort_index"])
+    
+    return merged_photos
+
 def get_image_dimensions(image_path: Path) -> tuple[int, int]:
     """Extract image dimensions with EXIF orientation applied."""
     try:
@@ -148,31 +362,47 @@ def optimize_photo_order(photos: list) -> list:
     return ordered
 
 def scan_albums():
+    """Enhanced album scanning with incremental updates and change tracking."""
+    # Load existing metadata
+    old_metadata = load_existing_metadata(OUTPUT_FILE)
+    
+    # Initialize change tracker
+    changes = ChangeTracker()
+    
+    # Prepare new metadata structure
     albums_data = {}
     
     if not os.path.exists(ALBUMS_DIR):
         print(f"Directory {ALBUMS_DIR} not found.")
         return
 
-    # Walk through the Albums directory
-    # Structure: Albums/<Category>/<Image>
-    # Note: Requirements say "recursive scan". Assuming top level folders are albums.
-    
     root_path = Path(ALBUMS_DIR)
+    scanned_album_names = set()
     
+    # Scan albums
     for album_dir in [d for d in root_path.iterdir() if d.is_dir()]:
         album_name = album_dir.name
+        
         # Skip hidden folders
         if album_name.startswith('.'):
             continue
-
+        
+        scanned_album_names.add(album_name)
         print(f"Scanning album: {album_name}")
         
-        # Phase 1: Collect photo data (EXIF + dimensions)
-        photos = []
+        # Get old album data if exists
+        old_album = old_metadata.get(album_name, {})
+        old_photos = old_album.get("photos", [])
+        
+        # Track new album
+        if album_name not in old_metadata:
+            changes.log_album_added(album_name)
+        
+        # Phase 1: Scan filesystem for new photos
+        new_scanned_photos = []
         valid_extensions = {'.jpg', '.jpeg', '.png', '.webp'}
         
-        for file in sorted(album_dir.iterdir()):
+        for file in album_dir.iterdir():
             if file.suffix.lower() in valid_extensions:
                 # Get EXIF metadata
                 metadata = get_exif_data(file)
@@ -183,7 +413,7 @@ def scan_albums():
                 # Calculate aspect ratio and orientation
                 aspect_ratio, orientation = classify_orientation(width, height)
                 
-                photos.append({
+                new_scanned_photos.append({
                     "filename": file.name,
                     "width": width,
                     "height": height,
@@ -192,23 +422,35 @@ def scan_albums():
                     "metadata": metadata
                 })
         
-        # Phase 2: Apply optimize_photo_order()
-        photos = optimize_photo_order(photos)
+        # Phase 2: Merge with old metadata (preserves sort_index and photo_name)
+        merged_photos = merge_photo_metadata(
+            old_photos,
+            new_scanned_photos,
+            changes,
+            album_name
+        )
         
-        # Phase 3: Assign sort_index
-        for idx, photo in enumerate(photos):
-            photo["sort_index"] = idx
-
+        # Build album entry
         albums_data[album_name] = {
-            "album_title": album_name,
+            "album_title": old_album.get("album_title", album_name),
             "folder_name": album_name,
-            "photos": photos
+            "photos": merged_photos
         }
+    
+    # Track removed albums
+    old_album_names = set(old_metadata.keys())
+    removed_albums = old_album_names - scanned_album_names
+    for album in removed_albums:
+        changes.log_album_removed(album)
 
+    # Write output
     with open(OUTPUT_FILE, 'w') as f:
         json.dump(albums_data, f, indent=2)
     
     print(f"Metadata generated in {OUTPUT_FILE}")
+    
+    # Save change log
+    changes.save_to_file()
 
 if __name__ == "__main__":
     scan_albums()
