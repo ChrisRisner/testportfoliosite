@@ -37,6 +37,97 @@ A static portfolio site generator that turns a directory of images into a respon
 2.  Add `.jpg`, `.png`, or `.webp` images to the folder.
 3.  The folder name will become the album title.
 
+## Usage
+
+### Step 1: Scan Albums and Generate Metadata
+
+First, scan your photo albums to extract EXIF data, compute dimensions, and pre-calculate sort order:
+
+```bash
+python src/scan_albums.py
+```
+
+This generates `albums_metadata.json` with:
+- EXIF metadata (camera, lens, settings, date)
+- Image dimensions (width, height, aspect ratio)
+- Pre-computed sort order (portrait-pairing algorithm)
+- Orientation classification (portrait/landscape)
+
+### Step 2: Build Static Site
+
+Next, build the static photo gallery site:
+
+```bash
+python src/build.py
+```
+
+This generates the `dist/` folder with:
+- Optimized images (large and thumbnail sizes)
+- HTML pages for each album
+- Global database (db.json)
+- Per-album metadata files (metadata.json)
+
+### Step 3: Preview or Deploy
+
+Serve the static site locally or deploy to hosting:
+
+```bash
+# Local preview
+python -m http.server -d dist 8000
+
+# Then visit http://localhost:8000
+```
+
+## Album Cover Configuration
+
+You can manually select a cover photo for any album by editing `albums_metadata.json`:
+
+```json
+{
+  "Portugal": {
+    "album_title": "Portugal Trip 2026",
+    "folder_name": "Portugal",
+    "cover_filename": "_DSC1012.JPG",
+    "photos": [...]
+  }
+}
+```
+
+Add the `cover_filename` field with the exact filename of the photo you want to use as the album cover. If not specified or if the file is not found, the first photo in the sorted order will be used.
+
+## Output Structure
+
+After running the build process, the `dist/` directory contains:
+
+```
+dist/
+├── db.json                     # Global database (all albums)
+├── index.html                  # Home page
+├── 404.html                    # Error page
+├── static/                     # CSS and JavaScript
+├── media/                      # Optimized images
+│   └── [album]/
+│       ├── large_*.jpg         # Large images (1600x1200)
+│       └── thumb_*.jpg         # Thumbnails (600x600)
+└── [album]/
+    ├── index.html              # Album page
+    └── metadata.json           # Per-album metadata (smaller, album-specific)
+```
+
+### albums_metadata.json Schema
+
+Each album contains:
+- `album_title` - Display title
+- `folder_name` - Source folder name
+- `cover_filename` - (Optional) Manual cover image selection
+- `photos[]` - Array of photo objects with:
+  - `filename` - Original filename
+  - `width`, `height` - Image dimensions
+  - `aspect_ratio` - Computed ratio (width/height)
+  - `orientation` - "portrait" or "landscape"
+  - `sort_index` - Display order (0-based)
+  - `metadata` - EXIF data (camera, lens, settings, etc.)
+
 ## Metadata Generation
 
 To extract EXIF metadata (camera model, lens, exposure settings) from your images and generate a `albums_metadata.json` file:

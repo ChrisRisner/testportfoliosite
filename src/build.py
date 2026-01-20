@@ -10,6 +10,7 @@ import json
 import shutil
 from pathlib import Path
 from typing import Dict, List, Any, Optional
+from datetime import datetime
 
 from PIL import Image, ExifTags, ImageOps
 from jinja2 import Environment, FileSystemLoader
@@ -38,11 +39,6 @@ def setup_directories():
         if dist_static.exists():
             shutil.rmtree(dist_static)
         shutil.copytree(STATIC_DIR, dist_static)
-
-        # Copy favicon to root if exists
-        favicon_src = STATIC_DIR / "favicon.ico"
-        if favicon_src.exists():
-            shutil.copy2(favicon_src, DIST_DIR / "favicon.ico")
 
 def get_exif_data(img: Image.Image) -> Dict[str, str]:
     """Extract and format specific EXIF data."""
@@ -137,10 +133,176 @@ def optimize_photo_order(photos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     
     return ordered
 
+def select_cover_photo(photos: List[Dict[str, Any]], album_meta: dict) -> Dict[str, Any]:
+    """Select album cover photo with fallback."""
+    cover_filename = album_meta.get("cover_filename")
+    
+    if cover_filename:
+        for photo in photos:
+            if photo.get("src", "").endswith(cover_filename):
+                print(f"  Using specified cover: {cover_filename}")
+                return photo
+        print(f"  Warning: Cover '{cover_filename}' not found, using first image")
+    
+    return photos[0]
+
+def apply_metadata_sort_order(photos: List[Dict[str, Any]], album_meta: dict) -> List[Dict[str, Any]]:
+    """Apply pre-computed sort order from metadata."""
+    sort_map = {}
+    for photo_meta in album_meta.get("photos", []):
+        filename = photo_meta.get("filename")
+        sort_index = photo_meta.get("sort_index")
+        if filename is not None and sort_index is not None:
+            sort_map[filename] = sort_index
+    
+    if not sort_map:
+        return optimize_photo_order(photos)
+    
+    def get_sort_key(photo):
+        src = photo.get("src", "")
+        filename = Path(src).name.replace("large_", "")
+        return sort_map.get(filename, 999)
+    
+    return sorted(photos, key=get_sort_key)
+
+def extract_filename(src_url: str) -> str:
+    """Extract original filename from processed URL."""
+    filename = Path(src_url).name
+    # Remove 'large_' prefix
+    return filename.replace("large_", "")
+
+def format_display_meta(meta: dict) -> dict:
+    """Format metadata for display."""
+    formatted = {}
+    
+    if "camera_model" in meta or "Model" in meta:
+        formatted["camera"] = meta.get("camera_model") or meta.get("Model")
+    
+    # Combine lens_model if available
+    if "lens_model" in meta:
+        formatted["lens"] = meta["lens_model"]
+    
+    # Combine settings into single string
+    settings_parts = []
+    if "aperture" in meta:
+        settings_parts.append(meta["aperture"])
+    if "shutter_speed" in meta:
+        settings_parts.append(meta["shutter_speed"])
+    if "iso" in meta:
+        settings_parts.append(f"ISO {meta['iso']}")
+    
+    if settings_parts:
+        formatted["settings"] = ", ".join(settings_parts)
+    
+    # Extract date
+    if "date_taken" in meta:
+        # Parse "2026:01:04 11:09:45" to "2026-01-04"
+        date_str = meta["date_taken"]
+        formatted["date"] = date_str.split()[0].replace(":", "-")
+    
+    return formatted
+
+def calculate_album_stats(photos: list) -> dict:
+    """Calculate album statistics."""
+    portrait_count = sum(1 for p in photos if (p["w"] / p["h"]) < 0.85)
+    landscape_count = len(photos) - portrait_count
+    
+    # Extract unique cameras
+    cameras = set()
+    dates = []
+    for photo in photos:
+        meta = photo.get("meta", {})
+        if "camera" in meta:
+            cameras.add(meta["camera"])
+    
+    return {
+        "total_photos": len(photos),
+        "portrait_count": portrait_count,
+        "landscape_count": landscape_count,
+        "cameras": sorted(list(cameras)),
+        "date_range": {
+            "earliest": min(dates) if dates else None,
+            "latest": max(dates) if dates else None
+        }
+    }
+
+def find_album_navigation(current_slug: str, all_albums: list) -> Optional[dict]:
+    """Find previous and next albums for navigation."""
+    slugs = [a["slug"] for a in all_albums]
+    try:
+        current_idx = slugs.index(current_slug)
+        return {
+            "prev_album": slugs[current_idx - 1] if current_idx > 0 else None,
+            "next_album": slugs[current_idx + 1] if current_idx < len(slugs) - 1 else None
+        }
+    except ValueError:
+        return None
+
+def generate_album_metadata(
+    album: dict,
+    all_albums: list,
+    builder_version: str = "1.0.0"
+) -> dict:
+    """
+    Generate per-album metadata structure.
+    
+    Args:
+        album: Album dict with slug, title, photos
+        all_albums: List of all albums (for navigation)
+        builder_version: Build script version
+    
+    Returns:
+        Complete metadata dict ready for JSON serialization
+    """
+    photos = album["photos"]
+    
+    # Calculate statistics
+    stats = calculate_album_stats(photos)
+    
+    # Find navigation
+    navigation = find_album_navigation(album["slug"], all_albums)
+    
+    # Build complete metadata
+    metadata = {
+        "slug": album["slug"],
+        "title": album["title"],
+        "folder": album.get("folder", album["title"]),
+        "photos": [
+            {
+                "filename": extract_filename(p["src"]),
+                "src": p["src"],
+                "thumb": p["thumb"],
+                "w": p["w"],
+                "h": p["h"],
+                "aspect_ratio": round(p["w"] / p["h"], 3) if p["h"] > 0 else 1.0,
+                "orientation": "portrait" if (p["w"] / p["h"]) < 0.85 else "landscape",
+                "sort_index": idx,
+                "meta": format_display_meta(p.get("meta", {}))
+            }
+            for idx, p in enumerate(photos)
+        ],
+        "stats": stats,
+        "navigation": navigation,
+        "generated": {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "builder_version": builder_version
+        }
+    }
+    
+    return metadata
+
 def main() -> int:
     """Main build entry point."""
     print("Starting build process...")
     setup_directories()
+    
+    # Load albums metadata
+    albums_metadata = {}
+    metadata_file = Path("albums_metadata.json")
+    if metadata_file.exists():
+        print("Loading albums_metadata.json...")
+        with open(metadata_file) as f:
+            albums_metadata = json.load(f)
     
     albums_data = []
 
@@ -164,14 +326,20 @@ def main() -> int:
                 if photo_data:
                     photos.append(photo_data)
         
-        # Optimize order
-        photos = optimize_photo_order(photos)
+        # Get album metadata if available
+        album_meta = albums_metadata.get(album_path.name, {})
+        
+        # Apply metadata-driven sort order or fallback to runtime algorithm
+        photos = apply_metadata_sort_order(photos, album_meta)
         
         if photos:
+            # Select cover photo (manual or first)
+            cover_photo = select_cover_photo(photos, album_meta)
+            
             albums_data.append({
                 "slug": album_slug,
                 "title": album_path.name,
-                "cover": photos[0]["thumb"],
+                "cover": cover_photo["thumb"],
                 "photos": photos
             })
     
@@ -192,20 +360,8 @@ def main() -> int:
         home_html = template.render(db=db, current_album=None, base_url=BASE_URL)
         with open(DIST_DIR / "index.html", "w") as f:
             f.write(home_html)
-
-        # 2. Generate About Page
-        if (TEMPLATE_DIR / "about.html").exists():
-            print("Generating About Page...")
-            template_about = env.get_template("about.html")
-            about_html = template_about.render(db=db, base_url=BASE_URL)
-            about_dir = DIST_DIR / "about"
-            about_dir.mkdir(exist_ok=True, parents=True)
-            with open(about_dir / "index.html", "w") as f:
-                f.write(about_html)
-        else:
-            print("Warning: about.html template not found.")
             
-        # 3. Generate Album Pages
+        # 2. Generate Album Pages
         print("Generating Album Pages...")
         for album in albums_data:
             slug = album["slug"]
@@ -215,6 +371,11 @@ def main() -> int:
             album_html = template.render(db=db, current_album=album, base_url=BASE_URL)
             with open(album_dir / "index.html", "w") as f:
                 f.write(album_html)
+            
+            # Generate per-album metadata.json
+            album_metadata = generate_album_metadata(album, albums_data, builder_version="1.0.0")
+            with open(album_dir / "metadata.json", "w") as f:
+                json.dump(album_metadata, f, indent=2)
                 
         print(f"Generated home and {len(albums_data)} album pages.")
 

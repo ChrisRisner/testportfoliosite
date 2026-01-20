@@ -7,7 +7,6 @@
 * Use the metadata file in generating album pages
     DONE Pre-process step to generate a metadata file for each album including exif info per photo, title, album title, album subtitle
 
-* Look into how stephan morais prevents right clicking on page
 * Evaluate google analytics or alternatives
 * add Robots.txt
 * Add detail to about page - reference where we stole design from
