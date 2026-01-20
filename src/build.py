@@ -389,6 +389,19 @@ def main() -> int:
         else:
             print("Warning: 404.html template not found.")
 
+
+        # 4. Generate About Page
+        if (TEMPLATE_DIR / "about.html").exists():
+            print("Generating About Page...")
+            template_about = env.get_template("about.html")
+            about_html = template_about.render(db=db, base_url=BASE_URL)
+            about_dir = DIST_DIR / "about"
+            about_dir.mkdir(exist_ok=True, parents=True)
+            with open(about_dir / "index.html", "w") as f:
+                f.write(about_html)
+        else:
+            print("Warning: about.html template not found.")
+
     else:
         print("Warning: index.html template not found.")
 
