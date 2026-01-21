@@ -235,6 +235,10 @@ body {
     text-align: center;
 }
 
+.content p {
+    margin-bottom: 3rem;
+}
+
 .not-found-container p {
     margin: 1rem 0;
 }
