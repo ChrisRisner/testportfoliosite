@@ -10,7 +10,7 @@ import json
 import shutil
 from pathlib import Path
 from typing import Dict, List, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from PIL import Image, ExifTags, ImageOps
 from jinja2 import Environment, FileSystemLoader
@@ -366,7 +366,7 @@ def generate_album_metadata(
         "stats": stats,
         "navigation": navigation,
         "generated": {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
             "builder_version": builder_version
         }
     }
@@ -487,7 +487,7 @@ def main() -> int:
         # 5. Generate Sitemap
         print("Generating sitemap.xml...")
         base_url = BASE_URL or "https://chrisrisner.com"
-        build_time = datetime.utcnow()
+        build_time = datetime.now(timezone.utc)
         sitemap_content = generate_sitemap(base_url, albums_data, build_time)
         
         with open(DIST_DIR / "sitemap.xml", "w", encoding="utf-8") as f:
