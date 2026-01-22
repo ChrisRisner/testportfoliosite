@@ -50,7 +50,9 @@ def get_exif_data(img: Image.Image) -> Dict[str, str]:
     for key, val in exif.items():
         if key in ExifTags.TAGS:
             tag = ExifTags.TAGS[key]
-            if tag == "ExposureTime":
+            if tag == "DateTime" or tag == "DateTimeOriginal":
+                meta["date_taken"] = str(val)
+            elif tag == "ExposureTime":
                 # Convert fraction if needed, simplistically for now
                 meta["shutter"] = str(val)
             elif tag == "FNumber":
@@ -238,6 +240,86 @@ def find_album_navigation(current_slug: str, all_albums: list) -> Optional[dict]
     except ValueError:
         return None
 
+def generate_sitemap(base_url: str, albums_data: list, build_time: datetime) -> str:
+    """
+    Generate XML sitemap for all pages.
+    
+    Args:
+        base_url: Site base URL (e.g., 'https://chrisrisner.com')
+        albums_data: List of album dictionaries with slug and photos
+        build_time: Current build timestamp
+        
+    Returns:
+        Complete XML sitemap as string
+    """
+    from xml.etree import ElementTree as ET
+    
+    # Create root element
+    urlset = ET.Element('urlset', xmlns='http://www.sitemaps.org/schemas/sitemap/0.9')
+    
+    # Add home page
+    url = ET.SubElement(urlset, 'url')
+    ET.SubElement(url, 'loc').text = f'{base_url}/'
+    ET.SubElement(url, 'lastmod').text = build_time.strftime('%Y-%m-%d')
+    ET.SubElement(url, 'changefreq').text = 'weekly'
+    ET.SubElement(url, 'priority').text = '1.0'
+    
+    # Add album pages
+    for album in albums_data:
+        url = ET.SubElement(urlset, 'url')
+        ET.SubElement(url, 'loc').text = f'{base_url}/{album["slug"]}/'
+        
+        # Extract last modified from most recent photo date
+        if album.get('photos'):
+            photo_dates = []
+            for photo in album['photos']:
+                if photo.get('meta', {}).get('date_taken'):
+                    try:
+                        # Parse "2026:01:08 20:16:24" format
+                        date_str = photo['meta']['date_taken'].split()[0]
+                        photo_dates.append(date_str.replace(':', '-'))
+                    except (IndexError, ValueError):
+                        pass
+            
+            if photo_dates:
+                ET.SubElement(url, 'lastmod').text = max(photo_dates)
+        
+        ET.SubElement(url, 'changefreq').text = 'monthly'
+        ET.SubElement(url, 'priority').text = '0.8'
+    
+    # Add about page
+    url = ET.SubElement(urlset, 'url')
+    ET.SubElement(url, 'loc').text = f'{base_url}/about/'
+    ET.SubElement(url, 'lastmod').text = build_time.strftime('%Y-%m-%d')
+    ET.SubElement(url, 'changefreq').text = 'yearly'
+    ET.SubElement(url, 'priority').text = '0.6'
+    
+    # Generate XML string with declaration
+    tree = ET.ElementTree(urlset)
+    ET.indent(tree, space='  ')  # Pretty print with 2-space indent
+    
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + ET.tostring(urlset, encoding='unicode')
+
+def generate_robots_txt(base_url: str) -> str:
+    """
+    Generate robots.txt content.
+    
+    Args:
+        base_url: Site base URL for sitemap reference
+        
+    Returns:
+        robots.txt content as string
+    """
+    return f"""# robots.txt for {base_url}
+# Allow all crawlers to access all content
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: {base_url}/sitemap.xml
+"""
+
 def generate_album_metadata(
     album: dict,
     all_albums: list,
@@ -401,6 +483,26 @@ def main() -> int:
                 f.write(about_html)
         else:
             print("Warning: about.html template not found.")
+
+        # 5. Generate Sitemap
+        print("Generating sitemap.xml...")
+        base_url = BASE_URL or "https://chrisrisner.com"
+        build_time = datetime.utcnow()
+        sitemap_content = generate_sitemap(base_url, albums_data, build_time)
+        
+        with open(DIST_DIR / "sitemap.xml", "w", encoding="utf-8") as f:
+            f.write(sitemap_content)
+        
+        print(f"Sitemap generated with {len(albums_data) + 2} URLs")
+        
+        # 6. Generate robots.txt
+        print("Generating robots.txt...")
+        robots_content = generate_robots_txt(base_url)
+        
+        with open(DIST_DIR / "robots.txt", "w", encoding="utf-8") as f:
+            f.write(robots_content)
+        
+        print("robots.txt generated")
 
     else:
         print("Warning: index.html template not found.")

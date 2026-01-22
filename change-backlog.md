@@ -9,7 +9,6 @@
 
 * Evaluate google analytics or alternatives
 * add Robots.txt
-* Add detail to about page - reference where we stole design from
 * Check to make sure site is cached through cloudflare
 
 
