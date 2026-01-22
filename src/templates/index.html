@@ -8,7 +8,17 @@
 
 {% block content %}
     {% if current_album %}
-    <h2>{{ current_album.title }}</h2>
+    <div class="album-header">
+        <h2>{{ current_album.title }}</h2>
+        {% if current_album.subtitle %}
+        <p class="album-subtitle">{{ current_album.subtitle }}</p>
+        {% endif %}
+    </div>
+    {% if current_album.summary %}
+    <div class="album-summary">
+        <p>{{ current_album.summary }}</p>
+    </div>
+    {% endif %}
     <div class="album-grid" id="gallery">
         {% for photo in current_album.photos %}
         <a href="{{ base_url }}{{ photo.src }}"

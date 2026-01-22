@@ -63,6 +63,35 @@ body {
     margin-bottom: 2rem;
 }
 
+/* Album Header Container */
+.album-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.album-header h2 {
+    margin-bottom: 0.5rem;
+}
+
+/* Album Subtitle - centered, muted, italic */
+.album-subtitle {
+    font-size: 1.1rem;
+    color: #666;
+    font-style: italic;
+    margin: -0.5rem 0 1.5rem 0;
+    text-align: center;
+}
+
+/* Album Summary - centered block, constrained width */
+.album-summary {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #333;
+    margin: 0 auto 3rem auto;
+    max-width: 700px;
+    text-align: left;
+}
+
 .social-links {
     margin-top: 2rem;
     display: flex;
@@ -210,6 +239,20 @@ body {
 
     .sidebar h1 {
         display: none;
+    }
+    
+    .album-header {
+        margin-bottom: 2rem;
+    }
+    
+    .album-subtitle {
+        font-size: 1rem;
+    }
+    
+    .album-summary {
+        font-size: 0.95rem;
+        margin-bottom: 2rem;
+        padding: 0 1rem;
     }
     
     .album-grid {

@@ -421,6 +421,8 @@ def main() -> int:
             albums_data.append({
                 "slug": album_slug,
                 "title": album_path.name,
+                "subtitle": album_meta.get("subtitle", ""),
+                "summary": album_meta.get("summary", ""),
                 "cover": cover_photo["thumb"],
                 "photos": photos
             })

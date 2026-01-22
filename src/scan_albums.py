@@ -433,6 +433,8 @@ def scan_albums():
         # Build album entry
         albums_data[album_name] = {
             "album_title": old_album.get("album_title", album_name),
+            "subtitle": old_album.get("subtitle", ""),
+            "summary": old_album.get("summary", ""),
             "folder_name": album_name,
             "photos": merged_photos
         }

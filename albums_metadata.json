@@ -1,6 +1,8 @@
 {
   "Drinks": {
     "album_title": "Drinks",
+    "subtitle": "I drink you drink we drink",
+    "summary": "",
     "folder_name": "Drinks",
     "photos": [
       {
@@ -132,6 +134,8 @@
   },
   "Portugal": {
     "album_title": "Portugal",
+    "subtitle": "A Week in Lisbon",
+    "summary": "Exploring the vibrant streets, historic architecture, and stunning coastal views of Portugal's capital city during a winter visit in January 2026.",
     "folder_name": "Portugal",
     "photos": [
       {
@@ -354,6 +358,8 @@
   },
   "Signs": {
     "album_title": "Signs",
+    "subtitle": "",
+    "summary": "A collection of signs showing the way.",
     "folder_name": "Signs",
     "photos": [
       {
@@ -1314,6 +1320,8 @@
   },
   "My Long Title Is Long": {
     "album_title": "My Long Title Is Long",
+    "subtitle": "",
+    "summary": "",
     "folder_name": "My Long Title Is Long",
     "photos": [
       {
@@ -1536,6 +1544,8 @@
   },
   "Food": {
     "album_title": "Food",
+    "subtitle": "",
+    "summary": "",
     "folder_name": "Food",
     "photos": [
       {
