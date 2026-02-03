@@ -97,6 +97,7 @@ body {
     display: flex;
     gap: 15px;
     /* padding-top removed as we're using margin-top now */
+    justify-content: center;
 }
 
 .social-links a {
