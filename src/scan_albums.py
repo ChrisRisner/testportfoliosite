@@ -1,6 +1,8 @@
 import os
 import json
 import re
+import tempfile
+import shutil
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Any
@@ -22,6 +24,13 @@ TAGS_TO_EXTRACT = {
     "ExposureTime": "shutter_speed"
 }
 
+# Artist and Copyright EXIF tag IDs
+ARTIST_TAG = 0x013B       # 315
+COPYRIGHT_TAG = 0x8298    # 33432
+GPS_IFD_TAG = 0x8825      # 34853 – pointer to GPS Info IFD
+EXPECTED_ARTIST = "Chris Risner"
+EXPECTED_COPYRIGHT = "Copyright 2026 Chris Risner"
+
 def sanitize_exif_string(value):
     """
     Remove null bytes and control characters from EXIF strings.
@@ -40,6 +49,125 @@ def sanitize_exif_string(value):
     cleaned = cleaned.strip()
     
     return cleaned if cleaned else None
+
+def check_and_update_artist_copyright(image_path: Path) -> dict:
+    """
+    Check Artist and Copyright EXIF fields and update them if incorrect.
+    Also strips any GPS/location data from the image EXIF.
+
+    Saves the image in-place with corrected EXIF data, preserving JPEG
+    quality via ``quality='keep'``.
+
+    Args:
+        image_path: Path to the image file
+
+    Returns:
+        Dict describing any fields that were changed, or empty dict
+    """
+    changes = {}
+    try:
+        img = Image.open(image_path)
+        exif = img.getexif()
+
+        current_artist = sanitize_exif_string(exif.get(ARTIST_TAG, "")) or ""
+        current_copyright = sanitize_exif_string(exif.get(COPYRIGHT_TAG, "")) or ""
+
+        artist_needs_update = current_artist != EXPECTED_ARTIST
+        copyright_needs_update = current_copyright != EXPECTED_COPYRIGHT
+
+        # Check for GPS data in both the top-level tag and the GPS IFD
+        has_gps = GPS_IFD_TAG in exif or bool(exif.get_ifd(GPS_IFD_TAG))
+
+        if not artist_needs_update and not copyright_needs_update and not has_gps:
+            img.close()
+            return {}
+
+        if artist_needs_update:
+            changes["artist"] = {
+                "old": current_artist or "(not set)",
+                "new": EXPECTED_ARTIST
+            }
+            exif[ARTIST_TAG] = EXPECTED_ARTIST
+
+        if copyright_needs_update:
+            changes["copyright"] = {
+                "old": current_copyright or "(not set)",
+                "new": EXPECTED_COPYRIGHT
+            }
+            exif[COPYRIGHT_TAG] = EXPECTED_COPYRIGHT
+
+        if has_gps:
+            # Remove the GPS IFD pointer from the top-level EXIF
+            if GPS_IFD_TAG in exif:
+                del exif[GPS_IFD_TAG]
+            changes["gps"] = {"old": "present", "new": "removed"}
+
+        # Fully load pixel data before saving back to the same path
+        img.load()
+
+        # Use the actual image format detected by Pillow rather than
+        # relying on the file extension, which may not match.
+        img_format = img.format or ""
+        save_kwargs = {"exif": exif.tobytes()}
+
+        if img_format.upper() == "JPEG":
+            try:
+                # Try lossless round-trip first
+                save_kwargs["quality"] = "keep"
+                save_kwargs["subsampling"] = "keep"
+                _safe_save(img, image_path, save_kwargs)
+            except Exception:
+                # Fall back to high-quality save
+                save_kwargs["quality"] = 98
+                save_kwargs.pop("subsampling", None)
+                _safe_save(img, image_path, save_kwargs)
+        else:
+            if img_format.upper() == "WEBP":
+                save_kwargs["quality"] = 95
+            _safe_save(img, image_path, save_kwargs)
+
+        img.close()
+
+        updated_fields = []
+        if artist_needs_update:
+            updated_fields.append("Artist")
+        if copyright_needs_update:
+            updated_fields.append("Copyright")
+        if has_gps:
+            updated_fields.append("GPS (removed)")
+        print(f"  Updated {', '.join(updated_fields)} for {image_path.name}")
+
+    except Exception as e:
+        print(f"Error updating Artist/Copyright for {image_path}: {e}")
+
+    return changes
+
+
+def _safe_save(img: Image.Image, target_path: Path, save_kwargs: dict):
+    """
+    Save an image to a temporary file first, then replace the original.
+
+    This prevents a failed or partial write from corrupting the source file.
+
+    Args:
+        img: Pillow Image to save
+        target_path: Final destination path
+        save_kwargs: Keyword arguments forwarded to ``Image.save``
+    """
+    parent = target_path.parent
+    fd, tmp_path = tempfile.mkstemp(
+        suffix=target_path.suffix, dir=parent
+    )
+    os.close(fd)
+    try:
+        img.save(tmp_path, **save_kwargs)
+        shutil.move(tmp_path, target_path)
+    except Exception:
+        # Clean up the temp file on failure
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        raise
+
 
 def get_exif_data(image_path):
     exif_data = {}
@@ -404,6 +532,11 @@ def scan_albums():
         
         for file in album_dir.iterdir():
             if file.suffix.lower() in valid_extensions:
+                # Check and update Artist/Copyright EXIF fields
+                ac_changes = check_and_update_artist_copyright(file)
+                if ac_changes:
+                    changes.log_photo_updated(album_name, file.name, ac_changes)
+
                 # Get EXIF metadata
                 metadata = get_exif_data(file)
                 
