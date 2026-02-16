@@ -53,7 +53,10 @@ def get_author_info(image_path):
     return author_info
 
 def check_albums(albums_dir="Albums"):
-    """Scan all albums and report author information."""
+    """Scan all albums and report images with incorrect author/copyright info."""
+    
+    expected_artist = "Chris Risner"
+    expected_copyright = "Copyright 2026 Chris Risner"
     
     if not os.path.exists(albums_dir):
         print(f"Error: Directory '{albums_dir}' not found.")
@@ -61,8 +64,8 @@ def check_albums(albums_dir="Albums"):
     
     root_path = Path(albums_dir)
     total_images = 0
-    images_with_author = 0
-    images_without_author = 0
+    correct_images = 0
+    incorrect_images = 0
     errors = 0
     
     # Valid image extensions
@@ -78,10 +81,8 @@ def check_albums(albums_dir="Albums"):
         if not album_dir.is_dir() or album_dir.name.startswith('.'):
             continue
         
-        print(f"\n📁 ALBUM: {album_dir.name}")
-        print("-" * 80)
-        
         album_images = []
+        album_issues = []
         
         # Collect all images in this album
         for file in sorted(album_dir.iterdir()):
@@ -89,7 +90,6 @@ def check_albums(albums_dir="Albums"):
                 album_images.append(file)
         
         if not album_images:
-            print("  (no images found)")
             continue
         
         # Check each image
@@ -99,38 +99,41 @@ def check_albums(albums_dir="Albums"):
             
             if "error" in author_info:
                 errors += 1
-                print(f"  ❌ {file.name}")
-                print(f"     ERROR: {author_info['error']}")
+                album_issues.append((file.name, f"ERROR: {author_info['error']}"))
                 continue
             
-            # Check if any author field is populated
-            has_author = any([
-                author_info.get("artist"),
-                author_info.get("copyright"),
-                author_info.get("author")
-            ])
+            artist = (author_info.get("artist") or "").strip(" \t\n\r\x00")
+            copyright_val = (author_info.get("copyright") or "").strip(" \t\n\r\x00")
             
-            if has_author:
-                images_with_author += 1
-                print(f"  ✓ {file.name}")
-                if author_info.get("artist"):
-                    print(f"     Artist: {author_info['artist']}")
-                if author_info.get("copyright"):
-                    print(f"     Copyright: {author_info['copyright']}")
-                if author_info.get("author"):
-                    print(f"     Author: {author_info['author']}")
+            artist_ok = artist == expected_artist
+            copyright_ok = copyright_val == expected_copyright
+            
+            if artist_ok and copyright_ok:
+                correct_images += 1
             else:
-                images_without_author += 1
-                print(f"  ✗ {file.name}")
-                print(f"     No author information found")
+                incorrect_images += 1
+                reasons = []
+                if not artist_ok:
+                    reasons.append(f"Artist: '{artist}' (expected '{expected_artist}')")
+                if not copyright_ok:
+                    reasons.append(f"Copyright: '{copyright_val}' (expected '{expected_copyright}')")
+                album_issues.append((file.name, "; ".join(reasons)))
+        
+        # Only print album header if there are issues
+        if album_issues:
+            print(f"\n📁 ALBUM: {album_dir.name}")
+            print("-" * 80)
+            for filename, reason in album_issues:
+                print(f"  ✗ {filename}")
+                print(f"     {reason}")
     
     # Summary
     print("\n" + "=" * 80)
     print("SUMMARY")
     print("=" * 80)
     print(f"Total images checked: {total_images}")
-    print(f"Images WITH author info: {images_with_author} ({images_with_author/total_images*100:.1f}%)" if total_images > 0 else "Images WITH author info: 0")
-    print(f"Images WITHOUT author info: {images_without_author} ({images_without_author/total_images*100:.1f}%)" if total_images > 0 else "Images WITHOUT author info: 0")
+    print(f"Images with correct info: {correct_images} ({correct_images/total_images*100:.1f}%)" if total_images > 0 else "Images with correct info: 0")
+    print(f"Images with incorrect info: {incorrect_images} ({incorrect_images/total_images*100:.1f}%)" if total_images > 0 else "Images with incorrect info: 0")
     if errors > 0:
         print(f"Errors encountered: {errors}")
     print()
