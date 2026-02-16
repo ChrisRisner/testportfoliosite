@@ -1,9 +1,10 @@
 {
   "Art": {
     "album_title": "Art",
-    "subtitle": "",
+    "subtitle": "Interesting art from around the world.",
     "summary": "",
     "folder_name": "Art",
+    "cover_filename": "art-portugal-hands-boat.JPG",
     "photos": [
       {
         "filename": "art-braga-fountain.JPG",
@@ -548,8 +549,9 @@
   },
   "Portugal": {
     "album_title": "Portugal",
-    "subtitle": "A Week in Lisbon",
-    "summary": "Exploring the vibrant streets, historic architecture, and stunning coastal views of Portugal's capital city during a winter visit in January 2026.",
+    "subtitle": "Travels in Portugal",
+    "summary": "Photos from Lisbon, Porto, the Duoro Valley, Braga, Sintra, and the Algarve.",
+    "cover_filename": "portugal-braga-mont.JPG",
     "folder_name": "Portugal",
     "photos": [
       {
@@ -1092,9 +1094,10 @@
   },
   "Ireland": {
     "album_title": "Ireland",
-    "subtitle": "",
+    "subtitle": "Photos from traveling around Ireland.",
     "summary": "",
     "folder_name": "Ireland",
+    "cover_filename": "ireland-dunquin-pier.JPG",
     "photos": [
       {
         "filename": "ireland-abbey.JPG",
@@ -1442,9 +1445,10 @@
   },
   "Signs": {
     "album_title": "Signs",
-    "subtitle": "",
-    "summary": "A collection of signs showing the way.",
+    "subtitle": "Signs from around the world.",
+    "summary": "",
     "folder_name": "Signs",
+    "cover_filename": "signs-brain.jpg",
     "photos": [
       {
         "filename": "sign-cheezy.jpg",
@@ -1612,7 +1616,7 @@
   },
   "Street": {
     "album_title": "Street",
-    "subtitle": "",
+    "subtitle": "Street photography from around the world.",
     "summary": "",
     "folder_name": "Street",
     "photos": [
@@ -1638,9 +1642,10 @@
   },
   "Hawaii": {
     "album_title": "Hawaii",
-    "subtitle": "",
+    "subtitle": "Photos from travels around Hawaii - mostly Kauai.",
     "summary": "",
     "folder_name": "Hawaii",
+    "cover_filename": "hawaii-kauai-night-beach.jpg",
     "photos": [
       {
         "filename": "hawaii-animals-chicken.jpg",
@@ -1822,7 +1827,7 @@
   },
   "Africa": {
     "album_title": "Africa",
-    "subtitle": "",
+    "subtitle": "Photos from a safari in Tanzania in January 2017.",
     "summary": "",
     "folder_name": "Africa",
     "photos": [
