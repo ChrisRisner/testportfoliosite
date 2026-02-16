@@ -4,11 +4,7 @@
 
 
 
-* Use the metadata file in generating album pages
-    DONE Pre-process step to generate a metadata file for each album including exif info per photo, title, album title, album subtitle
-
 * Evaluate google analytics or alternatives
-* add Robots.txt
 * Check to make sure site is cached through cloudflare
 
 
