@@ -27,6 +27,7 @@ TAGS_TO_EXTRACT = {
 # Artist and Copyright EXIF tag IDs
 ARTIST_TAG = 0x013B       # 315
 COPYRIGHT_TAG = 0x8298    # 33432
+GPS_IFD_TAG = 0x8825      # 34853 – pointer to GPS Info IFD
 EXPECTED_ARTIST = "Chris Risner"
 EXPECTED_COPYRIGHT = "Copyright 2026 Chris Risner"
 
@@ -52,6 +53,7 @@ def sanitize_exif_string(value):
 def check_and_update_artist_copyright(image_path: Path) -> dict:
     """
     Check Artist and Copyright EXIF fields and update them if incorrect.
+    Also strips any GPS/location data from the image EXIF.
 
     Saves the image in-place with corrected EXIF data, preserving JPEG
     quality via ``quality='keep'``.
@@ -73,7 +75,10 @@ def check_and_update_artist_copyright(image_path: Path) -> dict:
         artist_needs_update = current_artist != EXPECTED_ARTIST
         copyright_needs_update = current_copyright != EXPECTED_COPYRIGHT
 
-        if not artist_needs_update and not copyright_needs_update:
+        # Check for GPS data in both the top-level tag and the GPS IFD
+        has_gps = GPS_IFD_TAG in exif or bool(exif.get_ifd(GPS_IFD_TAG))
+
+        if not artist_needs_update and not copyright_needs_update and not has_gps:
             img.close()
             return {}
 
@@ -90,6 +95,12 @@ def check_and_update_artist_copyright(image_path: Path) -> dict:
                 "new": EXPECTED_COPYRIGHT
             }
             exif[COPYRIGHT_TAG] = EXPECTED_COPYRIGHT
+
+        if has_gps:
+            # Remove the GPS IFD pointer from the top-level EXIF
+            if GPS_IFD_TAG in exif:
+                del exif[GPS_IFD_TAG]
+            changes["gps"] = {"old": "present", "new": "removed"}
 
         # Fully load pixel data before saving back to the same path
         img.load()
@@ -122,6 +133,8 @@ def check_and_update_artist_copyright(image_path: Path) -> dict:
             updated_fields.append("Artist")
         if copyright_needs_update:
             updated_fields.append("Copyright")
+        if has_gps:
+            updated_fields.append("GPS (removed)")
         print(f"  Updated {', '.join(updated_fields)} for {image_path.name}")
 
     except Exception as e:

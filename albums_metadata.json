@@ -50,8 +50,8 @@
         "orientation": "landscape",
         "metadata": {
           "camera_model": "NIKON Z 8",
-          "focal_length": "35.0 mm",
           "date_taken": "2026:01:02 14:29:05",
+          "focal_length": "35.0 mm",
           "shutter_speed": "1/40s",
           "aperture": "f/4.0",
           "iso": 220,
@@ -633,8 +633,8 @@
         "orientation": "landscape",
         "metadata": {
           "camera_model": "NIKON Z 8",
-          "focal_length": "37.0 mm",
           "date_taken": "2026:01:02 10:24:09",
+          "focal_length": "37.0 mm",
           "shutter_speed": "1/100s",
           "aperture": "f/5.0",
           "iso": 64,
@@ -849,8 +849,8 @@
         "orientation": "landscape",
         "metadata": {
           "camera_model": "NIKON Z 8",
-          "focal_length": "120.0 mm",
           "date_taken": "2025:12:30 09:23:27",
+          "focal_length": "120.0 mm",
           "shutter_speed": "1/200s",
           "aperture": "f/4.0",
           "iso": 64,
@@ -1311,24 +1311,6 @@
           "lens_model": "NIKKOR Z DX 16-50mm f/3.5-6.3 VR"
         },
         "sort_index": 11
-      },
-      {
-        "filename": "ireland-elephant-tusks.JPG",
-        "photo_name": "ireland-elephant-tusks.JPG",
-        "width": 4898,
-        "height": 3265,
-        "aspect_ratio": 1.5,
-        "orientation": "landscape",
-        "metadata": {
-          "camera_model": "ILCE-6000",
-          "date_taken": "2017:01:25 13:20:13",
-          "focal_length": "210.0 mm",
-          "shutter_speed": "1/400s",
-          "aperture": "f/6.3",
-          "iso": 320,
-          "lens_model": "E 55-210mm F4.5-6.3 OSS"
-        },
-        "sort_index": 12
       },
       {
         "filename": "ireland-hawk.jpg",
@@ -2270,60 +2252,6 @@
         "sort_index": 24
       },
       {
-        "filename": "africa-wildebeasts.JPG",
-        "photo_name": "africa-wildebeasts.JPG",
-        "width": 4898,
-        "height": 3265,
-        "aspect_ratio": 1.5,
-        "orientation": "landscape",
-        "metadata": {
-          "camera_model": "ILCE-6000",
-          "date_taken": "2017:01:26 09:30:00",
-          "focal_length": "96.0 mm",
-          "shutter_speed": "1/250s",
-          "aperture": "f/10.0",
-          "iso": 100,
-          "lens_model": "E 55-210mm F4.5-6.3 OSS"
-        },
-        "sort_index": 25
-      },
-      {
-        "filename": "africa-zebra-reflection.JPG",
-        "photo_name": "africa-zebra-reflection.JPG",
-        "width": 4771,
-        "height": 3180,
-        "aspect_ratio": 1.5,
-        "orientation": "landscape",
-        "metadata": {
-          "camera_model": "ILCE-6000",
-          "date_taken": "2017:01:24 16:24:12",
-          "focal_length": "210.0 mm",
-          "shutter_speed": "1/400s",
-          "aperture": "f/6.3",
-          "iso": 160,
-          "lens_model": "E 55-210mm F4.5-6.3 OSS"
-        },
-        "sort_index": 26
-      },
-      {
-        "filename": "africa-zebras-field.JPG",
-        "photo_name": "africa-zebras-field.JPG",
-        "width": 4898,
-        "height": 3265,
-        "aspect_ratio": 1.5,
-        "orientation": "landscape",
-        "metadata": {
-          "camera_model": "ILCE-6000",
-          "date_taken": "2017:01:26 11:49:49",
-          "focal_length": "58.0 mm",
-          "shutter_speed": "1/160s",
-          "aperture": "f/10.0",
-          "iso": 100,
-          "lens_model": "E 55-210mm F4.5-6.3 OSS"
-        },
-        "sort_index": 27
-      },
-      {
         "filename": "africa-zebras.JPG",
         "photo_name": "africa-zebras.JPG",
         "width": 6000,
@@ -2339,24 +2267,6 @@
           "iso": 360
         },
         "sort_index": 28
-      },
-      {
-        "filename": "safari-birds.JPG",
-        "photo_name": "safari-birds.JPG",
-        "width": 4898,
-        "height": 3265,
-        "aspect_ratio": 1.5,
-        "orientation": "landscape",
-        "metadata": {
-          "camera_model": "ILCE-6000",
-          "date_taken": "2017:01:31 16:53:36",
-          "focal_length": "210.0 mm",
-          "shutter_speed": "1/640s",
-          "aperture": "f/10.0",
-          "iso": 100,
-          "lens_model": "E 55-210mm F4.5-6.3 OSS"
-        },
-        "sort_index": 29
       }
     ]
   }
